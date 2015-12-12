@@ -22,17 +22,26 @@ Q.Sprite.extend("Player",{
       standingPoints: [ [ -16, 44], [ -23, 35 ], [-23,-48], [23,-48], [23, 35 ], [ 16, 44 ]],
       duckingPoints : [ [ -16, 44], [ -23, 35 ], [-23,-10], [23,-10], [23, 35 ], [ 16, 44 ]],
       speed: 100,
+      jumped: false,
+      state: 0, // not started = 0, flying = 1, dead = 2    
     });
 
     this.p.points = this.p.standingPoints;
     var that = this;
     Q.input.on("keydown", function(code) {
-      console.log("test");
-      that.p.vy = -600;
+      if (code == 38 && !that.jumped){
+        that.p.vy = -600;
+        that.jumped = true;
+      }
+    }); 
+    Q.input.on("keyup", function(code) {
+      if (code == 38){
+        that.jumped = false;
+      }
     }); 
     this.add("2d, animation");
   },
-
+    
   step: function(dt) {
     this.p.vx += (this.p.speed - this.p.vx)/4;
 
