@@ -12,11 +12,7 @@ Q.input.keyboardControls({
 var SPRITE_BOX = 1;
 var GRAVITY = 1000;
 
-var STATE_NOT_STARTED = 0;
-var STATE_PLAYING = 1;
-var STATE_DEAD = 2;
-
-Q.gravityY = 0;
+Q.gravityY = GRAVITY;
 
 Q.Sprite.extend("Player",{
 
@@ -30,8 +26,6 @@ Q.Sprite.extend("Player",{
       points: [ [ -16, 44], [ -23, 35 ], [-23,-48], [23,-48], [23, 35 ], [ 16, 44 ]],
       speed: 100,
       jumped: false,
-      // TODO - rip this state logic out of the player class and make it global.
-      enabled: false,
       jump_speed: -450,
     });
 
@@ -41,23 +35,17 @@ Q.Sprite.extend("Player",{
     this.play("jump_right");
   },
 
-  _setEnabled: function(state){
-    this.p.enabled = state;
-  },
-
   initControls: function(){
       Q.input.on("keydown", this, "_onKeyDown");
       Q.input.on("keyup", this, "_onKeyUp");
   },
 
   step: function(dt) {
-    if (this.p.enabled){
       this._step(dt);
-    }
   },
 
   _onKeyDown: function(code){
-    if (this.p.enabled && code == 38){
+    if (code == 38){
       if (!this.p.jumped){
         this.p.vy = this.p.jump_speed;
         this.p.jumped = true;
@@ -66,7 +54,7 @@ Q.Sprite.extend("Player",{
   },
 
   _onKeyUp: function(code){
-      if (this.p.enabled && code == 38){
+      if (code == 38){
         this.p.jumped = false;
       }
   },
@@ -77,9 +65,7 @@ Q.Sprite.extend("Player",{
     this.stage.viewport.centerOn(this.p.x + 300, 400 );
 
     if (this.p.y > 555){
-      this.p.state = STATE_DEAD;
-      Q.stageScene("endGame",1, { label: "You Died" }); 
-      Q.gravityY = 0;
+      Q.stageScene("endGame", 1, { label: "You Died" }); 
       this.p.vx = 0;
       this.p.vy = 0;
       this.p.speed = 0;
@@ -123,7 +109,6 @@ Q.Player.extend("Helicopter",{
 
 });
 
-
 Q.scene("level1",function(stage) {
 
   stage.insert(new Q.Repeater({ asset: "background-wall.png",
@@ -140,25 +125,27 @@ Q.scene("level1",function(stage) {
   stage.insert(heli);
 
   stage.add("viewport");
-
-  Q.input.on("onEnter", function(){
-    bird._setEnabled(true);
-    heli._setEnabled(true);
-    Q.gravityY = GRAVITY;
+  stage.viewport.centerOn(bird.p.x + 300, 400 );
+  stage.pause();
+  Q.input.on("up", function(){
+    stage.unpause();
   });
 });
 
 
 Q.scene("endGame", function(stage){
+  //pause the gameplay stage
+  Q.stage(0).pause();
   var box = stage.insert(new Q.UI.Container({
     x: Q.width/2, y: Q.height/2, fill: "rgba(0,0,0,0.5)"
   }));
   
-  var button = box.insert(new Q.UI.Button({ x: 0, y: 0, fill: "#CCCCCC",
-                                           label: "Play Again" }))         
-  var label = box.insert(new Q.UI.Text({x:10, y: -10 - button.p.h, 
+  var label1 = box.insert(new Q.UI.Text({ x: 0, y: 0, fill: "#CCCCCC",
+                                           label: "Press Any key"}));         
+  var label2 = box.insert(new Q.UI.Text({x:10, y: -10 - label1.p.h, 
                                         label: stage.options.label }));
-  button.on("click",function() {
+  Q.input.on("up", function(){
+    Q.input.off("up");
     Q.clearStages();
     Q.stageScene('level1');
   });
@@ -174,7 +161,7 @@ Q.load("player.json, player.png, background-wall.png, background-floor.png, crat
       stand_right: { frames:[14], rate: 1/10, flip: false },
       duck_right: { frames: [15], rate: 1/10, flip: false },
     });
-    Q.stageScene("level1");
+    Q.stageScene("level1", 0);
   
 });
 });
