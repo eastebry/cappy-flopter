@@ -11,7 +11,7 @@ Q.input.keyboardControls({
 
 var SPRITE_BOX = 1;
 var GRAVITY = 1000;
-var JUMP_SPEED = -450;
+
 var STATE_NOT_STARTED = 0;
 var STATE_PLAYING = 1;
 var STATE_DEAD = 2;
@@ -27,19 +27,18 @@ Q.Sprite.extend("Player",{
       collisionMask: SPRITE_BOX, 
       x: 100,
       y: 200,
-      standingPoints: [ [ -16, 44], [ -23, 35 ], [-23,-48], [23,-48], [23, 35 ], [ 16, 44 ]],
-      duckingPoints : [ [ -16, 44], [ -23, 35 ], [-23,-10], [23,-10], [23, 35 ], [ 16, 44 ]],
+      points: [ [ -16, 44], [ -23, 35 ], [-23,-48], [23,-48], [23, 35 ], [ 16, 44 ]],
       speed: 100,
       jumped: false,
       // TODO - rip this state logic out of the player class and make it global.
       enabled: false,
+      jump_speed: -450,
     });
 
-    this.p.points = this.p.standingPoints;
     this.initControls();
 
-
     this.add("2d, animation");
+    this.play("jump_right");
   },
 
   _setEnabled: function(state){
@@ -47,7 +46,6 @@ Q.Sprite.extend("Player",{
   },
 
   initControls: function(){
-      var that = this;
       Q.input.on("keydown", this, "_onKeyDown");
       Q.input.on("keyup", this, "_onKeyUp");
   },
@@ -61,7 +59,7 @@ Q.Sprite.extend("Player",{
   _onKeyDown: function(code){
     if (this.p.enabled && code == 38){
       if (!this.p.jumped){
-        this.p.vy = JUMP_SPEED;
+        this.p.vy = this.p.jump_speed;
         this.p.jumped = true;
       }
     }
@@ -76,10 +74,8 @@ Q.Sprite.extend("Player",{
   _step: function(dt){
     this.p.vx += (this.p.speed - this.p.vx)/4;
 
-    this.p.points = this.p.standingPoints;
-    this.play("jump_right");
-
     this.stage.viewport.centerOn(this.p.x + 300, 400 );
+
     if (this.p.y > 555){
       this.p.state = STATE_DEAD;
       Q.stageScene("endGame",1, { label: "You Died" }); 
@@ -97,7 +93,6 @@ Q.Player.extend("Helicopter",{
 
   init: function(p) {
       this._super(p);
-      this.p.is_heli = true;
       this.p.y = this.p.y / 2;
       this.p.x = 0,
       this.p.jump_speed = -55;
@@ -105,6 +100,7 @@ Q.Player.extend("Helicopter",{
 
   _step: function(dt) {
     this.p.vx += (this.p.speed - this.p.vx)/4;
+
     if(Q.inputs['down']) {
       this.p.vy += this.p.jump_speed;
     }
@@ -114,9 +110,6 @@ Q.Player.extend("Helicopter",{
     if (this.p.vy < -400){
       this.p.vy = -400;
     }
-
-    this.p.points = this.p.standingPoints;
-    this.play("jump_right");
   },
 
   _onKeyUp: function(code, player){
