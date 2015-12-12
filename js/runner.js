@@ -11,6 +11,7 @@ var JUMP_SPEED = -450;
 var STATE_NOT_STARTED = 0;
 var STATE_PLAYING = 1;
 var STATE_DEAD = 2;
+
 Q.gravityY = GRAVITY;
 
 Q.Sprite.extend("Player",{
@@ -27,6 +28,7 @@ Q.Sprite.extend("Player",{
       duckingPoints : [ [ -16, 44], [ -23, 35 ], [-23,-10], [23,-10], [23, 35 ], [ 16, 44 ]],
       speed: 100,
       jumped: false,
+      // TODO - rip this state logic out of the player class and make it global.
       state: STATE_NOT_STARTED,
       is_heli: false,
     });
@@ -70,6 +72,7 @@ Q.Sprite.extend("Player",{
     this.stage.viewport.centerOn(this.p.x + 300, 400 );
     if (this.p.y > 555){
       this.p.state = STATE_DEAD;
+      Q.stageScene("endGame",1, { label: "You Died" }); 
       Q.gravityY = 0;
       this.p.vx = 0;
       this.p.vy = 0;
@@ -95,11 +98,11 @@ Q.Player.extend("Helicopter",{
       console.log(this.p.jump_speed);
       this.p.vy += this.p.jump_speed;
     }
-    if (this.p.vy > 500){
-      this.p.vy = 500;
+    if (this.p.vy > 600){
+      this.p.vy = 600;
     }
-    if (this.p.vy < -500){
-      this.p.vy = -500;
+    if (this.p.vy < -400){
+      this.p.vy = -400;
     }
 
     this.p.points = this.p.standingPoints;
@@ -125,7 +128,22 @@ Q.scene("level1",function(stage) {
   stage.insert(new Q.Player());
   stage.insert(new Q.Helicopter());
   stage.add("viewport");
+});
 
+Q.scene("endGame", function(stage){
+  var box = stage.insert(new Q.UI.Container({
+    x: Q.width/2, y: Q.height/2, fill: "rgba(0,0,0,0.5)"
+  }));
+  
+  var button = box.insert(new Q.UI.Button({ x: 0, y: 0, fill: "#CCCCCC",
+                                           label: "Play Again" }))         
+  var label = box.insert(new Q.UI.Text({x:10, y: -10 - button.p.h, 
+                                        label: stage.options.label }));
+  button.on("click",function() {
+    Q.clearStages();
+    Q.stageScene('level1');
+  });
+  box.fit(20);
 });
   
 Q.load("player.json, player.png, background-wall.png, background-floor.png, crates.png, crates.json", function() {
