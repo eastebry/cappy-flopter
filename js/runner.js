@@ -20,7 +20,7 @@ Q.Sprite.extend("Player",{
     this._super(p,{
       sheet: "player",
       sprite: "player",
-      collisionMask: SPRITE_BOX, 
+      collisionMask: SPRITE_BOX,
       x: 100,
       y: 200,
       points: [ [ -16, 44], [ -23, 35 ], [-23,-48], [23,-48], [23, 35 ], [ 16, 44 ]],
@@ -106,8 +106,70 @@ Q.Player.extend("Helicopter",{
     // do nothing
   },
 
+});
+
+
+Q.Sprite.extend("Pipe",{
+
+    init: function(p) {
+        this._super(p,{
+            sprite: "crates",
+            sheet: "crates",
+            frame: 0,
+            collisionMask: SPRITE_BOX,
+            scale: 2,
+        });
+    },
 
 });
+
+
+function gen_bottom_pipe(x, y, height) {
+    var pipes = [];
+
+    var cum_height = 0;
+    var piece = new Q.Pipe({x: x, y: y + cum_height, frame: 0});
+    pipes.push(piece);
+    cum_height += piece.p.h * piece.p.scale;
+
+    while (cum_height < height) {
+        piece = new Q.Pipe({x: x, y: y + cum_height, frame: 1});
+        pipes.push(piece);
+        cum_height += piece.p.h * piece.p.scale;
+    }
+
+    return pipes;
+};
+
+
+function gen_top_pipe(x, y, height) {
+    var pipes = [];
+
+    var piece = new Q.Pipe({x: x, y: y, frame: 0});
+    var cum_height = piece.p.h * piece.p.scale;
+    piece.p.y -= cum_height;
+    pipes.push(piece);
+
+    while (cum_height < height) {
+        piece = new Q.Pipe({x: x, y: y, frame: 1});
+        cum_height += piece.p.h * piece.p.scale;
+        piece.p.y -= cum_height;
+        pipes.push(piece);
+    }
+
+    return pipes;
+};
+
+
+function gen_pipe_pair(x, ceiling, gap_ceiling, gap_floor, floor) {
+    var pipes = [];
+
+    pipes = pipes.concat(gen_top_pipe(x, gap_ceiling, gap_ceiling - ceiling));
+    pipes = pipes.concat(gen_bottom_pipe(x, gap_floor, floor - gap_floor));
+
+    return pipes;
+};
+
 
 Q.scene("level1",function(stage) {
 
@@ -123,6 +185,11 @@ Q.scene("level1",function(stage) {
   stage.insert(bird);
   heli = new Q.Helicopter();
   stage.insert(heli);
+
+  pieces = gen_pipe_pair(1000, 0, 200, 400, 655);
+  for (var i=0; i < pieces.length; i++) {
+    stage.insert(pieces[i]);
+  }
 
   stage.add("viewport");
   stage.viewport.centerOn(bird.p.x + 300, 400 );
