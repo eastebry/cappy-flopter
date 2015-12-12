@@ -6,11 +6,12 @@ var Q = window.Q = Quintus()
         .controls().touch()
 
 var SPRITE_BOX = 1;
-var GRAVITY = 2500;
+var GRAVITY = 1000;
+var JUMP_SPEED = -450;
 var STATE_NOT_STARTED = 0;
 var STATE_PLAYING = 1;
 var STATE_DEAD = 2;
-Q.gravityY = 0;
+Q.gravityY = GRAVITY;
 
 Q.Sprite.extend("Player",{
 
@@ -20,16 +21,24 @@ Q.Sprite.extend("Player",{
       sheet: "player",
       sprite: "player",
       collisionMask: SPRITE_BOX, 
-      x: 40,
+      x: 100,
       y: 200,
       standingPoints: [ [ -16, 44], [ -23, 35 ], [-23,-48], [23,-48], [23, 35 ], [ 16, 44 ]],
       duckingPoints : [ [ -16, 44], [ -23, 35 ], [-23,-10], [23,-10], [23, 35 ], [ 16, 44 ]],
       speed: 100,
       jumped: false,
       state: STATE_NOT_STARTED,
+      is_heli: false,
     });
 
     this.p.points = this.p.standingPoints;
+    this.initControls();
+
+
+    this.add("2d, animation");
+  },
+
+  initControls: function(){
     var that = this;
     Q.input.on("keydown", function(code) {
       if (code == 38){
@@ -39,7 +48,7 @@ Q.Sprite.extend("Player",{
         }
         else if (that.p.state == STATE_PLAYING){
           if (!that.p.jumped){
-            that.p.vy = -800;
+            that.p.vy = JUMP_SPEED;
             that.p.jumped = true;
           }
         }
@@ -50,10 +59,14 @@ Q.Sprite.extend("Player",{
         that.p.jumped = false;
       }
     }); 
-    this.add("2d, animation");
   },
+
   step: function(dt) {
     this.p.vx += (this.p.speed - this.p.vx)/4;
+
+    this.p.points = this.p.standingPoints;
+    this.play("jump_right");
+
     this.stage.viewport.centerOn(this.p.x + 300, 400 );
     if (this.p.y > 555){
       this.p.state = STATE_DEAD;
@@ -64,6 +77,40 @@ Q.Sprite.extend("Player",{
     }
   }
 });
+
+Q.Player.extend("Helicopter",{
+
+  init: function(p) {
+      this._super(p);
+      this.p.is_heli = true;
+      this.p.y = this.p.y / 2;
+      this.p.x = 0,
+      this.p.jump_speed = -55;
+  },
+
+  step: function(dt) {
+    this._super();
+    this.p.vx += (this.p.speed - this.p.vx)/4;
+    if(Q.inputs['down']) {
+      console.log(this.p.jump_speed);
+      this.p.vy += this.p.jump_speed;
+    }
+    if (this.p.vy > 500){
+      this.p.vy = 500;
+    }
+    if (this.p.vy < -500){
+      this.p.vy = -500;
+    }
+
+    this.p.points = this.p.standingPoints;
+    this.play("jump_right");
+  },
+
+  initControls: function(){
+  }
+
+});
+
 
 Q.scene("level1",function(stage) {
 
@@ -76,6 +123,7 @@ Q.scene("level1",function(stage) {
                                 y: 300 }));
 
   stage.insert(new Q.Player());
+  stage.insert(new Q.Helicopter());
   stage.add("viewport");
 
 });
@@ -92,6 +140,4 @@ Q.load("player.json, player.png, background-wall.png, background-floor.png, crat
     Q.stageScene("level1");
   
 });
-
-
 });
