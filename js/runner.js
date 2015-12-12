@@ -5,6 +5,10 @@ var Q = window.Q = Quintus()
         .setup({ maximize: true })
         .controls().touch()
 
+Q.input.keyboardControls({
+  ENTER: "onEnter"
+});
+
 var SPRITE_BOX = 1;
 var GRAVITY = 1000;
 var JUMP_SPEED = -450;
@@ -12,7 +16,7 @@ var STATE_NOT_STARTED = 0;
 var STATE_PLAYING = 1;
 var STATE_DEAD = 2;
 
-Q.gravityY = GRAVITY;
+Q.gravityY = 0;
 
 Q.Sprite.extend("Player",{
 
@@ -27,9 +31,8 @@ Q.Sprite.extend("Player",{
       duckingPoints : [ [ -16, 44], [ -23, 35 ], [-23,-10], [23,-10], [23, 35 ], [ 16, 44 ]],
       speed: 100,
       jumped: false,
-      state: STATE_NOT_STARTED,
       // TODO - rip this state logic out of the player class and make it global.
-      enabled: true,
+      enabled: false,
     });
 
     this.p.points = this.p.standingPoints;
@@ -39,12 +42,14 @@ Q.Sprite.extend("Player",{
     this.add("2d, animation");
   },
 
+  _setEnabled: function(state){
+    this.p.enabled = state;
+  },
+
   initControls: function(){
-    if (this.p.enabled){
       var that = this;
-      Q.input.on("keydown", function(code){that._onKeyDown(code, that);}); 
-      Q.input.on("keyup", function(code){that._onKeyUp(code, that);}); 
-    }
+      Q.input.on("keydown", this, "_onKeyDown");
+      Q.input.on("keyup", this, "_onKeyUp");
   },
 
   step: function(dt) {
@@ -53,18 +58,18 @@ Q.Sprite.extend("Player",{
     }
   },
 
-  _onKeyDown: function(code, player){
-    if (code == 38){
-      if (!player.p.jumped){
-        player.p.vy = JUMP_SPEED;
-        player.p.jumped = true;
+  _onKeyDown: function(code){
+    if (this.p.enabled && code == 38){
+      if (!this.p.jumped){
+        this.p.vy = JUMP_SPEED;
+        this.p.jumped = true;
       }
     }
   },
 
-  _onKeyUp: function(code, player){
-      if (code == 38){
-        player.p.jumped = false;
+  _onKeyUp: function(code){
+      if (this.p.enabled && code == 38){
+        this.p.jumped = false;
       }
   },
 
@@ -88,7 +93,6 @@ Q.Sprite.extend("Player",{
 });
 
 
-
 Q.Player.extend("Helicopter",{
 
   init: function(p) {
@@ -100,7 +104,6 @@ Q.Player.extend("Helicopter",{
   },
 
   _step: function(dt) {
-    this._super();
     this.p.vx += (this.p.speed - this.p.vx)/4;
     if(Q.inputs['down']) {
       this.p.vy += this.p.jump_speed;
@@ -138,10 +141,20 @@ Q.scene("level1",function(stage) {
                                 speedX: 1.0,
                                 y: 300 }));
 
-  stage.insert(new Q.Player());
-  stage.insert(new Q.Helicopter());
+  bird = new Q.Player();
+  stage.insert(bird);
+  heli = new Q.Helicopter();
+  stage.insert(heli);
+
   stage.add("viewport");
+
+  Q.input.on("onEnter", function(){
+    bird._setEnabled(true);
+    heli._setEnabled(true);
+    Q.gravityY = GRAVITY;
+  });
 });
+
 
 Q.scene("endGame", function(stage){
   var box = stage.insert(new Q.UI.Container({
