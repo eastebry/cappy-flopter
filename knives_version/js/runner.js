@@ -6,8 +6,11 @@ var Q = window.Q = Quintus()
         .controls().touch()
 
 var SPRITE_BOX = 1;
-
-Q.gravityY = 2000;
+var GRAVITY = 2500;
+var STATE_NOT_STARTED = 0;
+var STATE_PLAYING = 1;
+var STATE_DEAD = 2;
+Q.gravityY = 0;
 
 Q.Sprite.extend("Player",{
 
@@ -23,46 +26,44 @@ Q.Sprite.extend("Player",{
       duckingPoints : [ [ -16, 44], [ -23, 35 ], [-23,-10], [23,-10], [23, 35 ], [ 16, 44 ]],
       speed: 100,
       jumped: false,
-      state: 0, // not started = 0, flying = 1, dead = 2    
+      state: STATE_NOT_STARTED,
     });
 
     this.p.points = this.p.standingPoints;
     var that = this;
     Q.input.on("keydown", function(code) {
-      if (code == 38 && !that.jumped){
-        that.p.vy = -600;
-        that.jumped = true;
+      if (code == 38){
+        if (that.p.state == STATE_NOT_STARTED){
+          Q.gravityY = GRAVITY;
+          that.p.state = STATE_PLAYING;
+        }
+        else if (that.p.state == STATE_PLAYING){
+          if (!that.p.jumped){
+            that.p.vy = -800;
+            that.p.jumped = true;
+          }
+        }
       }
     }); 
     Q.input.on("keyup", function(code) {
       if (code == 38){
-        that.jumped = false;
+        that.p.jumped = false;
       }
     }); 
     this.add("2d, animation");
   },
-    
   step: function(dt) {
     this.p.vx += (this.p.speed - this.p.vx)/4;
-
-
-    this.p.points = this.p.standingPoints;
-    if(this.p.landed) {
-      if(Q.inputs['down']) { 
-        this.play("duck_right");
-        this.p.points = this.p.duckingPoints;
-      } else {
-        this.play("walk_right");
-      }
-    } else {
-      this.play("jump_right");
-    }
-
     this.stage.viewport.centerOn(this.p.x + 300, 400 );
-
+    if (this.p.y > 555){
+      this.p.state = STATE_DEAD;
+      Q.gravityY = 0;
+      this.p.vx = 0;
+      this.p.vy = 0;
+      this.p.speed = 0;
+    }
   }
 });
-
 
 Q.scene("level1",function(stage) {
 
