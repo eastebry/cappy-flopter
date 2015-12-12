@@ -23,44 +23,56 @@ Q.Sprite.extend("Player",{
       duckingPoints : [ [ -16, 44], [ -23, 35 ], [-23,-10], [23,-10], [23, 35 ], [ 16, 44 ]],
       speed: 100,
       jumped: false,
+      is_heli: false,
       state: 0, // not started = 0, flying = 1, dead = 2    
     });
 
     this.p.points = this.p.standingPoints;
+
     var that = this;
     Q.input.on("keydown", function(code) {
-      if (code == 38 && !that.jumped){
+      if (
+        ((!that.p.is_heli && code == 38) || (that.p.is_heli && code == 40))
+        && !that.jumped
+      ){
         that.p.vy = -600;
         that.jumped = true;
       }
     }); 
     Q.input.on("keyup", function(code) {
-      if (code == 38){
+      if ((!that.p.is_heli && code == 38) || (that.p.is_heli && code == 40)){
         that.jumped = false;
       }
     }); 
+
     this.add("2d, animation");
   },
     
   step: function(dt) {
     this.p.vx += (this.p.speed - this.p.vx)/4;
 
-
     this.p.points = this.p.standingPoints;
-    if(this.p.landed) {
-      if(Q.inputs['down']) { 
-        this.play("duck_right");
-        this.p.points = this.p.duckingPoints;
-      } else {
-        this.play("walk_right");
-      }
-    } else {
-      this.play("jump_right");
-    }
+    this.play("jump_right");
 
     this.stage.viewport.centerOn(this.p.x + 300, 400 );
 
   }
+});
+
+Q.Player.extend("Helicopter",{
+
+    init: function(p) {
+        this._super(p);
+        this.p.is_heli = true;
+        this.p.y = this.p.y / 2;
+    },
+
+      step: function(dt) {
+        this.p.vx += (this.p.speed - this.p.vx)/4;
+
+        this.p.points = this.p.standingPoints;
+        this.play("jump_right");
+    }
 });
 
 
@@ -75,6 +87,7 @@ Q.scene("level1",function(stage) {
                                 y: 300 }));
 
   stage.insert(new Q.Player());
+  stage.insert(new Q.Helicopter());
   stage.add("viewport");
 
 });
