@@ -13,7 +13,7 @@ var Q = window.Q = Quintus()
         .setup({
             width: 1280,
             height: 720,
-            scaleToFit: true
+            scaleToFit: false
         }).controls().touch()
 
 Q.input.keyboardControls({
@@ -308,7 +308,7 @@ Q.scene("level1",function(stage) {
   // var cave = new Cave(100, 700, 500, 1366);
 
   Q.stage(0).on("step", this, function(){
-    // cave.step(bird.p.x); 
+    // cave.step(bird.p.x);
     pipe_generator.step(bird.p.x);
   });
 });
@@ -320,10 +320,10 @@ Q.scene("endGame", function(stage){
   var box = stage.insert(new Q.UI.Container({
     x: Q.width/2, y: Q.height/2, fill: "rgba(0,0,0,0.5)"
   }));
-  
+
   var label1 = box.insert(new Q.UI.Text({ x: 0, y: 0, fill: "#CCCCCC",
                                            label: "Press Enter"}));
-  var label2 = box.insert(new Q.UI.Text({x:10, y: -10 - label1.p.h, 
+  var label2 = box.insert(new Q.UI.Text({x:10, y: -10 - label1.p.h,
                                         label: stage.options.label }));
   Q.input.on("onEnter", function(){
     Q.input.off("onEnter");
@@ -332,7 +332,7 @@ Q.scene("endGame", function(stage){
   });
   box.fit(20);
 });
-  
+
 Q.load("background-wall.png, background-floor.png, crates.png, crates.json, cappy.png, flopter.png, pipe-top.png, pipe-body.png", function() {
     Q.compileSheets("crates.png","crates.json");
     Q.stageScene("level1", 0);
