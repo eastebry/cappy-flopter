@@ -38,7 +38,7 @@ Q.Sprite.extend("Pipe",{
     init: function(p) {
         this._super(p,{
             asset: "pipe-top.png",
-            scale: 2 * Q.scaleFactor,
+            scale: 4 * Q.scaleFactor,
         });
     },
 
@@ -180,7 +180,7 @@ Q.Generator.extend("PipeGenerator",{
         this.last_gap_top = undefined;
 
         this.max_diff = 300 * Q.scaleFactor;
-        this.buffer = 64 * Q.scaleFactor;
+        this.buffer = 120 * Q.scaleFactor;
     },
 
     generateAt: function(player_x) {
@@ -313,7 +313,7 @@ Q.scene("level1",function(stage) {
   stage.insert(heli);
 
   pipe_generator = new Q.PipeGenerator();
-  floor_generator = new Q.FloorGenerator(720);
+  floor_generator = new Q.FloorGenerator(720 * Q.scaleFactor);
 
   stage.add("viewport");
   stage.viewport.centerOn(bird.p.x + 300 * Q.scaleFactor, Q.height/2);
