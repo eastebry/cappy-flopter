@@ -9,10 +9,10 @@ Q.input.keyboardControls({
   ENTER: "onEnter"
 });
 
-var SPRITE_BOX = 1;
 var GRAVITY = 1000;
 
 Q.gravityY = GRAVITY;
+
 
 Q.Sprite.extend("Player",{
 
@@ -20,16 +20,16 @@ Q.Sprite.extend("Player",{
     this._super(p,{
       sheet: "player",
       sprite: "player",
-      collisionMask: SPRITE_BOX,
       x: 100,
       y: 200,
       points: [ [ -16, 44], [ -23, 35 ], [-23,-48], [23,-48], [23, 35 ], [ 16, 44 ]],
-      speed: 100,
+      speed: 200,
       jumped: false,
       jump_speed: -450,
     });
 
     this.initControls();
+    this.on("hit", this, "_handleCollision");
 
     this.add("2d, animation");
     this.play("jump_right");
@@ -42,6 +42,10 @@ Q.Sprite.extend("Player",{
 
   step: function(dt) {
       this._step(dt);
+  },
+
+  _handleCollision: function(col){
+    Q.stageScene("endGame", 1, { label: "You Died" });
   },
 
   _onKeyDown: function(code){
@@ -66,10 +70,7 @@ Q.Sprite.extend("Player",{
     this.stage.viewport.centerOn(this.p.x + 300, 400 );
 
     if (this.p.y > 555){
-      Q.stageScene("endGame", 1, { label: "You Died" }); 
-      this.p.vx = 0;
-      this.p.vy = 0;
-      this.p.speed = 0;
+        this._handleCollision();
     }
   },
 
@@ -117,7 +118,6 @@ Q.Sprite.extend("Pipe",{
             sprite: "crates",
             sheet: "crates",
             frame: 0,
-            collisionMask: SPRITE_BOX,
             scale: 2,
         });
     },
