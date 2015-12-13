@@ -10,8 +10,11 @@ Quintus.Random = function(Q) {
 
 var Q = window.Q = Quintus()
         .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, Random")
-        .setup({ maximize: true })
-        .controls().touch()
+        .setup({
+            width: 1280,
+            height: 720,
+            scaleToFit: true
+        }).controls().touch()
 
 Q.input.keyboardControls({
   ENTER: "onEnter"
@@ -86,7 +89,7 @@ Q.Evented.extend("PipeGenerator",{
     init: function() {
         this.frequency = 600; // lower value increases frequency
         this.ceiling = 0;
-        this.floor = 655;
+        this.floor = 620;
         this.gap_size = 200;
 
         this.last_x = undefined;
@@ -174,11 +177,7 @@ Q.Sprite.extend("Player",{
   _step: function(dt){
     this.p.vx += (this.p.speed - this.p.vx)/4;
 
-    this.stage.viewport.centerOn(this.p.x + 300, 400);
-
-    if (this.p.y > 555){
-        this._handleCollision();
-    }
+    this.stage.viewport.centerOn(this.p.x + 300, Q.height/2);
   },
 
 });
@@ -218,15 +217,59 @@ Q.Player.extend("Helicopter",{
 });
 
 
+  Q.Sprite.extend("SimpleRepeater",{
+    init: function(props) {
+      this._super(Q._defaults(props,{
+        speedX: 1,
+        repeatX: true,
+        type: 0
+      }));
+      this.p.repeatW = this.p.repeatW || this.p.w;
+      this.p.repeatH = this.p.repeatH || this.p.h;
+    },
+
+    draw: function(ctx) {
+      var p = this.p,
+          asset = this.asset(),
+          sheet = this.sheet(),
+          scale = this.stage.viewport ? this.stage.viewport.scale : 1,
+          viewX = Math.floor(this.stage.viewport ? this.stage.viewport.x : 0),
+          offsetX = Math.floor(p.x + viewX * this.p.speedX),
+          curX, startX;
+      if(p.repeatX) {
+        curX = -offsetX % p.repeatW;
+        if(curX > 0) { curX -= p.repeatW; }
+      } else {
+        curX = p.x - viewX;
+      }
+
+      startX = curX;
+      while(curX < Q.width / scale) {
+        if(sheet) {
+          sheet.draw(ctx,curX + viewX,-p.cy,p.frame);
+        } else {
+          ctx.drawImage(asset,curX + viewX,-p.cy);
+        }
+        curX += p.repeatW;
+        if(!p.repeatX) { break; }
+      }
+    }
+  });
+
+
 Q.scene("level1",function(stage) {
 
-  stage.insert(new Q.Repeater({ asset: "background-wall.png",
-                                speedX: 0.5 }));
+  stage.insert(new Q.Repeater({
+    asset: "background-wall.png",
+    speedX: 0.5
+  }));
 
-  stage.insert(new Q.Repeater({ asset: "background-floor.png",
-                                repeatY: false,
-                                speedX: 1.0,
-                                y: 300 }));
+  stage.insert(new Q.SimpleRepeater({
+    asset: "background-floor.png",
+    speedX: 1.0,
+    y: 720,
+    type: 5
+  }));
 
   bird = new Q.Player();
   stage.insert(bird);
@@ -236,7 +279,7 @@ Q.scene("level1",function(stage) {
   pipe_generator = new Q.PipeGenerator();
 
   stage.add("viewport");
-  stage.viewport.centerOn(bird.p.x + 300, 400);
+  stage.viewport.centerOn(bird.p.x + 300, Q.height/2);
   stage.pause();
 
   Q.input.on("onEnter", function(){
