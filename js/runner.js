@@ -154,6 +154,7 @@ Q.Sprite.extend("Player",{
       speed: 200,
       jumped: false,
       jump_speed: -450,
+      scale: 4,
     });
 
     this.initControls();
