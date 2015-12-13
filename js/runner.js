@@ -242,6 +242,7 @@ Q.Player.extend("Helicopter",{
       this._super(Q._defaults(props,{
         speedX: 1,
         repeatX: true,
+        renderAlways: true,
         type: 0
       }));
       this.p.repeatW = this.p.repeatW || this.p.w;
