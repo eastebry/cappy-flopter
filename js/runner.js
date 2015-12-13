@@ -1,8 +1,8 @@
 window.addEventListener("load",function() {
 var canvas = document.querySelector('#quintus');
 var SCALE_FACTOR = 1;
-canvas.width = 1280 * SCALE_FACTOR;
-canvas.height = 720 * SCALE_FACTOR;
+canvas.width = 1472 * SCALE_FACTOR;
+canvas.height = 828 * SCALE_FACTOR;
 canvas.style['background-size'] = canvas.width + "px " + canvas.height + "px";
 var moveCanvas = function() {
   var windowHeight = window.innerHeight;
@@ -22,8 +22,8 @@ Quintus.Random = function(Q) {
 var Q = window.Q = Quintus()
         .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, Random")
         .setup({
-            width: 1280,
-            height: 720,
+            width: canvas.width,
+            height: canvas.height,
             scaleToFit: false,
         }).controls().touch()
 
@@ -31,7 +31,7 @@ Q.input.keyboardControls({
   ENTER: "onEnter"
 });
 
-Q.gravityY = 1000;
+Q.gravityY = 1000  * SCALE_FACTOR;
 Q.scaleFactor = SCALE_FACTOR;
 
 Q.Sprite.extend("Pipe",{
@@ -39,29 +39,16 @@ Q.Sprite.extend("Pipe",{
     init: function(p) {
         this._super(p,{
             asset: "pipe-top.png",
-            scale: 4 * Q.scaleFactor,
+            scale: 1 * Q.scaleFactor,
         });
     },
 
 });
-
 Q.Sprite.extend("Ground",{
     init: function(p) {
         this._super(p,{
-            sprite: "crates",
-            sheet: "crates",
-            frame: 0,
-            scale: 2 * Q.scaleFactor,
-        });
-    },
-});
-Q.Sprite.extend("GroundTile",{
-    init: function(p) {
-        this._super(p,{
-            sprite: "crates",
-            sheet: "crates",
-            frame: 0,
-            scale: 2 * Q.scaleFactor,
+            asset: "rock-texture.png",
+            scale: 1 * Q.scaleFactor,
         });
     },
 });
@@ -140,10 +127,10 @@ Q.Generator.extend("FloorGenerator",{
         this.x = 0;
         this.y = y;
 
-        this.ref_sprite = new Q.Sprite({asset: "background-floor.png"});
+        this.ref_sprite = new Q.Sprite({asset: "rock-texture.png"});
         this.frequency = this.ref_sprite.p.w;
         this.sprites = [];
-        this.list_limit = 3;
+        this.list_limit = 5;
 
         this.generateAt(0);
         this.generateAt(0);
@@ -153,12 +140,12 @@ Q.Generator.extend("FloorGenerator",{
         sprite = new Q.Sprite({
             x: this.x,
             y: this.y,
-            asset: "background-floor.png"
+            asset: "rock-texture.png"
         });
         Q.stage(1).insert(sprite);
 
         this.sprites.unshift(sprite);
-        if (this.sprites.length > this.list_limit) {
+       if (this.sprites.length > this.list_limit) {
             old_sprite = this.sprites.pop();
             old_sprite.destroy();
         }
@@ -175,7 +162,7 @@ Q.Generator.extend("PipeGenerator",{
 
         this.frequency = 600;
         this.ceiling = 0;
-        this.floor = 620 * Q.scaleFactor;
+        this.floor = (Q.height/2) * Q.scaleFactor;
         this.gap_size = 200 * Q.scaleFactor;
 
         this.last_gap_top = undefined;
@@ -197,7 +184,7 @@ Q.Generator.extend("PipeGenerator",{
         }
 
         pieces = gen_pipe_pair(
-          1000 * Q.scaleFactor + player_x,
+          Q.width * Q.scaleFactor + player_x,
           this.ceiling, gap_top,
           gap_top + this.gap_size,
           this.floor
@@ -218,10 +205,10 @@ Q.Sprite.extend("Player",{
       asset: "cappy.png",
       x: 100 * Q.scaleFactor,
       y: 200 * Q.scaleFactor,
-      speed: 200 * Q.scaleFactor,
+      speed: 100 * Q.scaleFactor,
       jumped: false,
-      jump_speed: -450 * Q.scaleFactor,
-      scale: 4 * Q.scaleFactor,
+      jump_speed: -350 * Q.scaleFactor,
+      scale: 1 * Q.scaleFactor,
     });
 
     this.initControls();
@@ -309,7 +296,7 @@ Q.scene("level1",function(stage) {
   stage.insert(heli);
 
   pipe_generator = new Q.PipeGenerator();
-  floor_generator = new Q.FloorGenerator(720 * Q.scaleFactor);
+  //floor_generator = new Q.FloorGenerator(Q.height/2 * Q.scaleFactor);
 
   stage.add("viewport");
   stage.viewport.centerOn(bird.p.x + 300 * Q.scaleFactor, Q.height/2);
@@ -320,12 +307,20 @@ Q.scene("level1",function(stage) {
   });
 
 
-  // var cave = new Cave(100, 700, 500, 1366);
+  ref_sprite = new Q.Sprite({asset: "rock-texture.png"});
+  w = ref_sprite.p.w;
+  h = ref_sprite.p.h;
+  var cave = new Cave(
+    Q.height/2 * SCALE_FACTOR,
+    Q.height * SCALE_FACTOR,
+    w,
+    h,
+    Q.width * SCALE_FACTOR);
 
   Q.stage(1).on("step", this, function(){
-    // cave.step(bird.p.x); 
+    cave.step(bird.p.x *  SCALE_FACTOR); 
     pipe_generator.step(bird.p.x);
-    floor_generator.step(bird.p.x);
+    // floor_generator.step(bird.p.x);
   });
 });
 
@@ -350,7 +345,7 @@ Q.scene("endGame", function(stage){
   box.fit(20);
 });
 
-Q.load("background-wall.png, background-floor.png, crates.png, crates.json, cappy.png, flopter.png, pipe-top.png, pipe-body.png", function() {
+Q.load("background-wall.png, rock-texture.png, crates.png, crates.json, cappy.png, flopter.png, pipe-top.png, pipe-body.png", function() {
     Q.compileSheets("crates.png","crates.json");
     initBackground();
     Q.stageScene("background", 0);
