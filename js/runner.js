@@ -35,6 +35,27 @@ Q.Sprite.extend("Pipe",{
 
 });
 
+Q.Sprite.extend("Ground",{
+    init: function(p) {
+        this._super(p,{
+            sprite: "crates",
+            sheet: "crates",
+            frame: 0,
+            scale: 2,
+        });
+    },
+});
+Q.Sprite.extend("GroundTile",{
+    init: function(p) {
+        this._super(p,{
+            sprite: "crates",
+            sheet: "crates",
+            frame: 0,
+            scale: 2,
+        });
+    },
+});
+
 
 function gen_bottom_pipe(x, y, height) {
     var pipes = [];
@@ -152,7 +173,7 @@ Q.Sprite.extend("Player",{
   },
 
   step: function(dt) {
-      PIPE_GENERATOR.step(this.p.x);
+      // PIPE_GENERATOR.step(this.p.x);
       this._step(dt);
   },
 
@@ -181,7 +202,7 @@ Q.Sprite.extend("Player",{
     this.stage.viewport.centerOn(this.p.x + 300, 400);
 
     if (this.p.y > 555){
-        this._handleCollision();
+        //this._handleCollision();
     }
   },
 
@@ -245,8 +266,11 @@ Q.scene("level1",function(stage) {
     stage.unpause();
   });
 
+
+  // var cave = new Cave(100, 700, 500, 1366);
+
   Q.stage(0).on("step", this, function(){
-    // our update function
+    // cave.step(bird.p.x); 
   });
 });
 
