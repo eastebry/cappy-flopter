@@ -150,11 +150,9 @@ Q.Sprite.extend("Player",{
 
   init: function(p) {
     this._super(p,{
-      sheet: "player",
-      sprite: "player",
+      asset: "cappy.png",
       x: 100,
       y: 200,
-      points: [[ -16, 44], [ -23, 35 ], [-23,-48], [23,-48], [23, 35 ], [ 16, 44 ]],
       speed: 200,
       jumped: false,
       jump_speed: -450,
@@ -163,8 +161,7 @@ Q.Sprite.extend("Player",{
     this.initControls();
     this.on("hit", this, "_handleCollision");
 
-    this.add("2d, animation");
-    this.play("jump_right");
+    this.add("2d");
   },
 
   initControls: function(){
@@ -207,6 +204,7 @@ Q.Player.extend("Helicopter",{
 
   init: function(p) {
       this._super(p);
+      this.p.asset = "flopter.png";
       this.p.y = this.p.y / 2;
       this.p.x = 0,
       this.p.jump_speed = -55;
@@ -336,16 +334,8 @@ Q.scene("endGame", function(stage){
   box.fit(20);
 });
   
-Q.load("player.json, player.png, background-wall.png, background-floor.png, crates.png, crates.json", function() {
-    Q.compileSheets("player.png","player.json");
+Q.load("background-wall.png, background-floor.png, crates.png, crates.json, cappy.png, flopter.png", function() {
     Q.compileSheets("crates.png","crates.json");
-    Q.animations("player", {
-      walk_right: { frames: [0,1,2,3,4,5,6,7,8,9,10], rate: 1/15, flip: false, loop: true },
-      jump_right: { frames: [13], rate: 1/10, flip: false },
-      stand_right: { frames:[14], rate: 1/10, flip: false },
-      duck_right: { frames: [15], rate: 1/10, flip: false },
-    });
     Q.stageScene("level1", 0);
-  
 });
 });
