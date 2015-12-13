@@ -17,9 +17,7 @@ Q.input.keyboardControls({
   ENTER: "onEnter"
 });
 
-var GRAVITY = 1000;
-
-Q.gravityY = GRAVITY;
+Q.gravityY = 1000;
 
 
 Q.Sprite.extend("Pipe",{
@@ -122,7 +120,6 @@ Q.Evented.extend("PipeGenerator",{
         this.last_gap_top = gap_top;
     },
 });
-var PIPE_GENERATOR = new Q.PipeGenerator();
 
 
 Q.Sprite.extend("Player",{
@@ -152,7 +149,6 @@ Q.Sprite.extend("Player",{
   },
 
   step: function(dt) {
-      PIPE_GENERATOR.step(this.p.x);
       this._step(dt);
   },
 
@@ -237,6 +233,8 @@ Q.scene("level1",function(stage) {
   heli = new Q.Helicopter();
   stage.insert(heli);
 
+  pipe_generator = new Q.PipeGenerator();
+
   stage.add("viewport");
   stage.viewport.centerOn(bird.p.x + 300, 400);
   stage.pause();
@@ -246,6 +244,7 @@ Q.scene("level1",function(stage) {
   });
 
   Q.stage(0).on("step", this, function(){
+    pipe_generator.step(bird.p.x);
     // our update function
   });
 });
@@ -265,9 +264,6 @@ Q.scene("endGame", function(stage){
   Q.input.on("onEnter", function(){
     Q.input.off("onEnter");
     Q.clearStages();
-
-    PIPE_GENERATOR = new Q.PipeGenerator();
-
     Q.stageScene('level1');
   });
   box.fit(20);
