@@ -161,7 +161,6 @@ Q.Sprite.extend("Player",{
   },
 
   _onKeyDown: function(code){
-    console.log(code);
     if (code == 13){
       if (!this.p.jumped){
         this.p.vy = this.p.jump_speed;
@@ -241,8 +240,13 @@ Q.scene("level1",function(stage) {
   stage.add("viewport");
   stage.viewport.centerOn(bird.p.x + 300, 400);
   stage.pause();
+
   Q.input.on("onEnter", function(){
     stage.unpause();
+  });
+
+  Q.stage(0).on("step", this, function(){
+    // our update function
   });
 });
 
