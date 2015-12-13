@@ -1,4 +1,14 @@
 window.addEventListener("load",function() {
+var canvas = document.querySelector('#quintus');
+var SCALE_FACTOR = .75;
+canvas.width = 1280 * SCALE_FACTOR;
+canvas.height = 720 * SCALE_FACTOR;
+var moveCanvas = function() {
+  var windowHeight = window.innerHeight;
+  canvas.style.top = ((windowHeight - canvas.height) / 2 | 0) + 'px';
+}
+window.addEventListener('resize', moveCanvas);
+moveCanvas();
 
 Quintus.Random = function(Q) {
 
@@ -21,14 +31,14 @@ Q.input.keyboardControls({
 });
 
 Q.gravityY = 1000;
-
+Q.scaleFactor = SCALE_FACTOR;
 
 Q.Sprite.extend("Pipe",{
 
     init: function(p) {
         this._super(p,{
             asset: "pipe-top.png",
-            scale: 2,
+            scale: 2 * Q.scaleFactor,
         });
     },
 
@@ -40,7 +50,7 @@ Q.Sprite.extend("Ground",{
             sprite: "crates",
             sheet: "crates",
             frame: 0,
-            scale: 2,
+            scale: 2 * Q.scaleFactor,
         });
     },
 });
@@ -50,7 +60,7 @@ Q.Sprite.extend("GroundTile",{
             sprite: "crates",
             sheet: "crates",
             frame: 0,
-            scale: 2,
+            scale: 2 * Q.scaleFactor,
         });
     },
 });
@@ -60,7 +70,7 @@ function gen_bottom_pipe(x, y, height) {
     var pipes = [];
 
     var cum_height = 0;
-    var piece = new Q.Pipe({x: x, y: y + cum_height, asset: "pipe-top.png"});
+    var piece = new Q.Pipe({x: x, y: y + cum_height, asset: "pipe-top.png",});
     pipes.push(piece);
     cum_height += piece.p.h * piece.p.scale;
 
@@ -108,14 +118,14 @@ Q.Evented.extend("PipeGenerator",{
     init: function() {
         this.frequency = 600; // lower value increases frequency
         this.ceiling = 0;
-        this.floor = 620;
-        this.gap_size = 200;
+        this.floor = 620 * Q.scaleFactor;
+        this.gap_size = 200 * Q.scaleFactor;
 
         this.last_x = undefined;
         this.last_gap_top = undefined;
 
-        this.max_diff = 300;
-        this.buffer = 64;
+        this.max_diff = 300 * Q.scaleFactor;
+        this.buffer = 64 * Q.scaleFactor;
     },
 
     step: function(player_x) {
@@ -133,7 +143,12 @@ Q.Evented.extend("PipeGenerator",{
                 gap_top = this.floor - this.buffer - this.gap_size;
         }
 
-        pieces = gen_pipe_pair(1000 + player_x, this.ceiling, gap_top, gap_top + this.gap_size, this.floor);
+        pieces = gen_pipe_pair(
+          1000 * Q.scaleFactor + player_x,
+          this.ceiling, gap_top,
+          gap_top + this.gap_size,
+          this.floor
+        );
         for (var i=0; i < pieces.length; i++) {
             Q.stage(0).insert(pieces[i]);
         }
@@ -149,12 +164,12 @@ Q.Sprite.extend("Player",{
   init: function(p) {
     this._super(p,{
       asset: "cappy.png",
-      x: 100,
-      y: 200,
-      speed: 200,
+      x: 100 * Q.scaleFactor,
+      y: 200 * Q.scaleFactor,
+      speed: 200 * Q.scaleFactor,
       jumped: false,
-      jump_speed: -450,
-      scale: 4,
+      jump_speed: -450 * Q.scaleFactor,
+      scale: 4 * Q.scaleFactor,
     });
 
     this.initControls();
@@ -193,7 +208,7 @@ Q.Sprite.extend("Player",{
 
   _step: function(dt){
     this.p.vx += (this.p.speed - this.p.vx)/4;
-    this.stage.viewport.centerOn(this.p.x + 300, Q.height/2);
+    this.stage.viewport.centerOn(this.p.x + 300 * Q.scaleFactor, Q.height/2);
   },
 
 });
@@ -206,7 +221,7 @@ Q.Player.extend("Helicopter",{
       this.p.asset = "flopter.png";
       this.p.y = this.p.y / 2;
       this.p.x = 0,
-      this.p.jump_speed = -55;
+      this.p.jump_speed = -55 * Q.scaleFactor;
   },
 
   _step: function(dt) {
@@ -215,11 +230,11 @@ Q.Player.extend("Helicopter",{
     if(Q.inputs['S']) {
       this.p.vy += this.p.jump_speed;
     }
-    if (this.p.vy > 600){
-      this.p.vy = 600;
+    if (this.p.vy > 600 * Q.scaleFactor){
+      this.p.vy = 600 * Q.scaleFactor;
     }
-    if (this.p.vy < -400){
-      this.p.vy = -400;
+    if (this.p.vy < -400 * Q.scaleFactor){
+      this.p.vy = -400 * Q.scaleFactor;
     }
   },
 
@@ -285,7 +300,7 @@ Q.scene("level1",function(stage) {
   stage.insert(new Q.SimpleRepeater({
     asset: "background-floor.png",
     speedX: 1.0,
-    y: 720,
+    y: 720 * Q.scaleFactor,
     type: 5
   }));
 
@@ -297,7 +312,7 @@ Q.scene("level1",function(stage) {
   pipe_generator = new Q.PipeGenerator();
 
   stage.add("viewport");
-  stage.viewport.centerOn(bird.p.x + 300, Q.height/2);
+  stage.viewport.centerOn(bird.p.x + 300 * Q.scaleFactor, Q.height/2);
   stage.pause();
 
   Q.input.on("onEnter", function(){
@@ -323,7 +338,7 @@ Q.scene("endGame", function(stage){
 
   var label1 = box.insert(new Q.UI.Text({ x: 0, y: 0, fill: "#CCCCCC",
                                            label: "Press Enter"}));
-  var label2 = box.insert(new Q.UI.Text({x:10, y: -10 - label1.p.h,
+  var label2 = box.insert(new Q.UI.Text({x:10 * Q.scaleFactor, y: -10 * Q.scaleFactor- label1.p.h,
                                         label: stage.options.label }));
   Q.input.on("onEnter", function(){
     Q.input.off("onEnter");
