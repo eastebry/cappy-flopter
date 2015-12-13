@@ -2,7 +2,6 @@
 <!-- saved from url=(0052)http://www.html5quintus.com/quintus/examples/runner/ -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta charset="UTF-8">
-
   <meta name="viewport" content="width=device-width, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
   <title>Clappy Fopter</title>
   <script src="./js/lib/quintus.js"></script>
@@ -15,12 +14,17 @@
   <script src="./js/lib/quintus_ui.js"></script>
 
   <script src="./js/caveGen.js"></script>
+  <script src="./js/background.js"></script>
   <script src="./js/runner.js"></script>
   <style>
     body { padding:0px; margin:0px; }
+    #quintus {
+    	background-image: url('./images/background.png');
+    	background-repeat: no-repeat;
+    }
   </style>
   </head>
-  <body>
+  <body style='background: black'>
     <div id="quintus_container">
       <canvas id="quintus" tabindex="0"></canvas>
     </div>

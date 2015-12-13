@@ -1,8 +1,9 @@
 window.addEventListener("load",function() {
 var canvas = document.querySelector('#quintus');
-var SCALE_FACTOR = .75;
+var SCALE_FACTOR = 1;
 canvas.width = 1280 * SCALE_FACTOR;
 canvas.height = 720 * SCALE_FACTOR;
+canvas.style['background-size'] = canvas.width + "px " + canvas.height + "px";
 var moveCanvas = function() {
   var windowHeight = window.innerHeight;
   canvas.style.top = ((windowHeight - canvas.height) / 2 | 0) + 'px';
@@ -23,7 +24,7 @@ var Q = window.Q = Quintus()
         .setup({
             width: 1280,
             height: 720,
-            scaleToFit: false
+            scaleToFit: false,
         }).controls().touch()
 
 Q.input.keyboardControls({
@@ -154,7 +155,7 @@ Q.Generator.extend("FloorGenerator",{
             y: this.y,
             asset: "background-floor.png"
         });
-        Q.stage(0).insert(sprite);
+        Q.stage(1).insert(sprite);
 
         this.sprites.unshift(sprite);
         if (this.sprites.length > this.list_limit) {
@@ -202,7 +203,7 @@ Q.Generator.extend("PipeGenerator",{
           this.floor
         );
         for (var i=0; i < pieces.length; i++) {
-            Q.stage(0).insert(pieces[i]);
+            Q.stage(1).insert(pieces[i]);
         }
 
         this.last_gap_top = gap_top;
@@ -239,7 +240,7 @@ Q.Sprite.extend("Player",{
   },
 
   _handleCollision: function(col){
-    Q.stageScene("endGame", 1, { label: "You Died" });
+    Q.stageScene("endGame", 2, { label: "You Died" });
   },
 
   _onKeyDown: function(code){
@@ -289,11 +290,11 @@ Q.Player.extend("Helicopter",{
     }
   },
 
-  _onKeyUp: function(code, player){
+  _onKeyUp: function(code){
     // do nothing
   },
 
-  _onKeyUp: function(code, player){
+  _onKeyUp: function(code){
     // do nothing
   },
 
@@ -301,11 +302,6 @@ Q.Player.extend("Helicopter",{
 
 
 Q.scene("level1",function(stage) {
-
-  stage.insert(new Q.Repeater({
-    asset: "background-wall.png",
-    speedX: 0.5
-  }));
 
   bird = new Q.Player();
   stage.insert(bird);
@@ -326,8 +322,8 @@ Q.scene("level1",function(stage) {
 
   // var cave = new Cave(100, 700, 500, 1366);
 
-  Q.stage(0).on("step", this, function(){
-    // cave.step(bird.p.x);
+  Q.stage(1).on("step", this, function(){
+    // cave.step(bird.p.x); 
     pipe_generator.step(bird.p.x);
     floor_generator.step(bird.p.x);
   });
@@ -336,7 +332,7 @@ Q.scene("level1",function(stage) {
 
 Q.scene("endGame", function(stage){
   //pause the gameplay stage
-  Q.stage(0).pause();
+  Q.stage(1).pause();
   var box = stage.insert(new Q.UI.Container({
     x: Q.width/2, y: Q.height/2, fill: "rgba(0,0,0,0.5)"
   }));
@@ -347,14 +343,17 @@ Q.scene("endGame", function(stage){
                                         label: stage.options.label }));
   Q.input.on("onEnter", function(){
     Q.input.off("onEnter");
-    Q.clearStages();
-    Q.stageScene('level1');
+    Q.clearStage(1);
+    Q.clearStage(2);
+    Q.stageScene('level1', 1);
   });
   box.fit(20);
 });
 
 Q.load("background-wall.png, background-floor.png, crates.png, crates.json, cappy.png, flopter.png, pipe-top.png, pipe-body.png", function() {
     Q.compileSheets("crates.png","crates.json");
-    Q.stageScene("level1", 0);
+    initBackground();
+    Q.stageScene("background", 0);
+    Q.stageScene("level1", 1);
 });
 });
