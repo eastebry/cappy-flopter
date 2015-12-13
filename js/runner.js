@@ -1,7 +1,15 @@
 window.addEventListener("load",function() {
 
+Quintus.Random = function(Q) {
+
+    Q.random = function(min,max) {
+        return Math.floor(Math.random() * (max - min)) + min;
+    }
+
+};
+
 var Q = window.Q = Quintus()
-        .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI")
+        .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, Random")
         .setup({ maximize: true })
         .controls().touch()
 
@@ -12,103 +20,6 @@ Q.input.keyboardControls({
 var GRAVITY = 1000;
 
 Q.gravityY = GRAVITY;
-
-
-Q.Sprite.extend("Player",{
-
-  init: function(p) {
-    this._super(p,{
-      sheet: "player",
-      sprite: "player",
-      x: 100,
-      y: 200,
-      points: [ [ -16, 44], [ -23, 35 ], [-23,-48], [23,-48], [23, 35 ], [ 16, 44 ]],
-      speed: 200,
-      jumped: false,
-      jump_speed: -450,
-    });
-
-    this.initControls();
-    this.on("hit", this, "_handleCollision");
-
-    this.add("2d, animation");
-    this.play("jump_right");
-  },
-
-  initControls: function(){
-      Q.input.on("keydown", this, "_onKeyDown");
-      Q.input.on("keyup", this, "_onKeyUp");
-  },
-
-  step: function(dt) {
-      this._step(dt);
-  },
-
-  _handleCollision: function(col){
-    Q.stageScene("endGame", 1, { label: "You Died" });
-  },
-
-  _onKeyDown: function(code){
-    console.log(code);
-    if (code == 13){
-      if (!this.p.jumped){
-        this.p.vy = this.p.jump_speed;
-        this.p.jumped = true;
-      }
-    }
-  },
-
-  _onKeyUp: function(code){
-      if (code == 13){
-        this.p.jumped = false;
-      }
-  },
-
-  _step: function(dt){
-    this.p.vx += (this.p.speed - this.p.vx)/4;
-
-    this.stage.viewport.centerOn(this.p.x + 300, 400 );
-
-    if (this.p.y > 555){
-        this._handleCollision();
-    }
-  },
-
-});
-
-
-Q.Player.extend("Helicopter",{
-
-  init: function(p) {
-      this._super(p);
-      this.p.y = this.p.y / 2;
-      this.p.x = 0,
-      this.p.jump_speed = -55;
-  },
-
-  _step: function(dt) {
-    this.p.vx += (this.p.speed - this.p.vx)/4;
-
-    if(Q.inputs['S']) {
-      this.p.vy += this.p.jump_speed;
-    }
-    if (this.p.vy > 600){
-      this.p.vy = 600;
-    }
-    if (this.p.vy < -400){
-      this.p.vy = -400;
-    }
-  },
-
-  _onKeyUp: function(code, player){
-    // do nothing
-  },
-
-  _onKeyUp: function(code, player){
-    // do nothing
-  },
-
-});
 
 
 Q.Sprite.extend("Pipe",{
@@ -172,6 +83,146 @@ function gen_pipe_pair(x, ceiling, gap_ceiling, gap_floor, floor) {
 };
 
 
+Q.Evented.extend("PipeGenerator",{
+
+    init: function() {
+        this.frequency = 600; // lower value increases frequency
+        this.ceiling = 0;
+        this.floor = 655;
+        this.gap_size = 200;
+
+        this.last_x = undefined;
+        this.last_gap_top = undefined;
+
+        this.max_diff = 300;
+        this.buffer = 64;
+    },
+
+    step: function(player_x) {
+        if (this.last_x !== undefined && player_x - this.last_x < this.frequency)
+            return;
+
+        var gap_top;
+        if (this.last_gap_top === undefined) {
+            gap_top = Q.random(this.ceiling + this.buffer, this.floor - this.buffer - this.gap_size);
+        } else {
+            gap_top = Q.random(this.last_gap_top - this.max_diff, this.last_gap_top + this.max_diff);
+            if (gap_top < this.ceiling + this.buffer)
+                gap_top = this.ceiling + this.buffer;
+            if (gap_top > this.floor - this.buffer - this.gap_size)
+                gap_top = this.floor - this.buffer - this.gap_size;
+        }
+
+        pieces = gen_pipe_pair(1000 + player_x, this.ceiling, gap_top, gap_top + this.gap_size, this.floor);
+        for (var i=0; i < pieces.length; i++) {
+            Q.stage(0).insert(pieces[i]);
+        }
+
+        this.last_x = player_x;
+        this.last_gap_top = gap_top;
+    },
+});
+var PIPE_GENERATOR = new Q.PipeGenerator();
+
+
+Q.Sprite.extend("Player",{
+
+  init: function(p) {
+    this._super(p,{
+      sheet: "player",
+      sprite: "player",
+      x: 100,
+      y: 200,
+      points: [[ -16, 44], [ -23, 35 ], [-23,-48], [23,-48], [23, 35 ], [ 16, 44 ]],
+      speed: 200,
+      jumped: false,
+      jump_speed: -450,
+    });
+
+    this.initControls();
+    this.on("hit", this, "_handleCollision");
+
+    this.add("2d, animation");
+    this.play("jump_right");
+  },
+
+  initControls: function(){
+      Q.input.on("keydown", this, "_onKeyDown");
+      Q.input.on("keyup", this, "_onKeyUp");
+  },
+
+  step: function(dt) {
+      PIPE_GENERATOR.step(this.p.x);
+      this._step(dt);
+  },
+
+  _handleCollision: function(col){
+    Q.stageScene("endGame", 1, { label: "You Died" });
+  },
+
+  _onKeyDown: function(code){
+    console.log(code);
+    if (code == 13){
+      if (!this.p.jumped){
+        this.p.vy = this.p.jump_speed;
+        this.p.jumped = true;
+      }
+    }
+  },
+
+  _onKeyUp: function(code){
+      if (code == 13){
+        this.p.jumped = false;
+      }
+  },
+
+  _step: function(dt){
+    this.p.vx += (this.p.speed - this.p.vx)/4;
+
+    this.stage.viewport.centerOn(this.p.x + 300, 400);
+
+    if (this.p.y > 555){
+        this._handleCollision();
+    }
+  },
+
+});
+
+
+Q.Player.extend("Helicopter",{
+
+  init: function(p) {
+      this._super(p);
+      this.p.y = this.p.y / 2;
+      this.p.x = 0,
+      this.p.jump_speed = -55;
+  },
+
+  _step: function(dt) {
+    this.p.vx += (this.p.speed - this.p.vx)/4;
+
+    if(Q.inputs['S']) {
+      this.p.vy += this.p.jump_speed;
+    }
+    if (this.p.vy > 600){
+      this.p.vy = 600;
+    }
+    if (this.p.vy < -400){
+      this.p.vy = -400;
+    }
+  },
+
+  _onKeyUp: function(code, player){
+    // do nothing
+  },
+
+  _onKeyUp: function(code, player){
+    // do nothing
+  },
+
+});
+
+
 Q.scene("level1",function(stage) {
 
   stage.insert(new Q.Repeater({ asset: "background-wall.png",
@@ -187,13 +238,8 @@ Q.scene("level1",function(stage) {
   heli = new Q.Helicopter();
   stage.insert(heli);
 
-  pieces = gen_pipe_pair(1000, 0, 200, 400, 655);
-  for (var i=0; i < pieces.length; i++) {
-    stage.insert(pieces[i]);
-  }
-
   stage.add("viewport");
-  stage.viewport.centerOn(bird.p.x + 300, 400 );
+  stage.viewport.centerOn(bird.p.x + 300, 400);
   stage.pause();
   Q.input.on("onEnter", function(){
     stage.unpause();
@@ -209,12 +255,15 @@ Q.scene("endGame", function(stage){
   }));
   
   var label1 = box.insert(new Q.UI.Text({ x: 0, y: 0, fill: "#CCCCCC",
-                                           label: "Press Enter"}));         
+                                           label: "Press Enter"}));
   var label2 = box.insert(new Q.UI.Text({x:10, y: -10 - label1.p.h, 
                                         label: stage.options.label }));
   Q.input.on("onEnter", function(){
     Q.input.off("onEnter");
     Q.clearStages();
+
+    PIPE_GENERATOR = new Q.PipeGenerator();
+
     Q.stageScene('level1');
   });
   box.fit(20);
