@@ -45,7 +45,8 @@ Q.Sprite.extend("Player",{
   },
 
   _onKeyDown: function(code){
-    if (code == 38){
+    console.log(code);
+    if (code == 13){
       if (!this.p.jumped){
         this.p.vy = this.p.jump_speed;
         this.p.jumped = true;
@@ -54,7 +55,7 @@ Q.Sprite.extend("Player",{
   },
 
   _onKeyUp: function(code){
-      if (code == 38){
+      if (code == 13){
         this.p.jumped = false;
       }
   },
@@ -87,7 +88,7 @@ Q.Player.extend("Helicopter",{
   _step: function(dt) {
     this.p.vx += (this.p.speed - this.p.vx)/4;
 
-    if(Q.inputs['down']) {
+    if(Q.inputs['S']) {
       this.p.vy += this.p.jump_speed;
     }
     if (this.p.vy > 600){
@@ -194,7 +195,7 @@ Q.scene("level1",function(stage) {
   stage.add("viewport");
   stage.viewport.centerOn(bird.p.x + 300, 400 );
   stage.pause();
-  Q.input.on("up", function(){
+  Q.input.on("onEnter", function(){
     stage.unpause();
   });
 });
@@ -208,11 +209,11 @@ Q.scene("endGame", function(stage){
   }));
   
   var label1 = box.insert(new Q.UI.Text({ x: 0, y: 0, fill: "#CCCCCC",
-                                           label: "Press Any key"}));         
+                                           label: "Press Enter"}));         
   var label2 = box.insert(new Q.UI.Text({x:10, y: -10 - label1.p.h, 
                                         label: stage.options.label }));
-  Q.input.on("up", function(){
-    Q.input.off("up");
+  Q.input.on("onEnter", function(){
+    Q.input.off("onEnter");
     Q.clearStages();
     Q.stageScene('level1');
   });
