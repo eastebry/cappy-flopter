@@ -27,9 +27,7 @@ Q.Sprite.extend("Pipe",{
 
     init: function(p) {
         this._super(p,{
-            sprite: "crates",
-            sheet: "crates",
-            frame: 0,
+            asset: "pipe-top.png",
             scale: 2,
         });
     },
@@ -62,12 +60,12 @@ function gen_bottom_pipe(x, y, height) {
     var pipes = [];
 
     var cum_height = 0;
-    var piece = new Q.Pipe({x: x, y: y + cum_height, frame: 0});
+    var piece = new Q.Pipe({x: x, y: y + cum_height, asset: "pipe-top.png"});
     pipes.push(piece);
     cum_height += piece.p.h * piece.p.scale;
 
     while (cum_height < height) {
-        piece = new Q.Pipe({x: x, y: y + cum_height, frame: 1});
+        piece = new Q.Pipe({x: x, y: y + cum_height, asset: "pipe-body.png"});
         pipes.push(piece);
         cum_height += piece.p.h * piece.p.scale;
     }
@@ -79,13 +77,13 @@ function gen_bottom_pipe(x, y, height) {
 function gen_top_pipe(x, y, height) {
     var pipes = [];
 
-    var piece = new Q.Pipe({x: x, y: y, frame: 0});
+    var piece = new Q.Pipe({x: x, y: y, asset: "pipe-top.png", angle: 180});
     var cum_height = piece.p.h * piece.p.scale;
     piece.p.y -= cum_height;
     pipes.push(piece);
 
     while (cum_height < height) {
-        piece = new Q.Pipe({x: x, y: y, frame: 1});
+        piece = new Q.Pipe({x: x, y: y, asset: "pipe-body.png", angle: 180});
         cum_height += piece.p.h * piece.p.scale;
         piece.p.y -= cum_height;
         pipes.push(piece);
@@ -334,7 +332,7 @@ Q.scene("endGame", function(stage){
   box.fit(20);
 });
   
-Q.load("background-wall.png, background-floor.png, crates.png, crates.json, cappy.png, flopter.png", function() {
+Q.load("background-wall.png, background-floor.png, crates.png, crates.json, cappy.png, flopter.png, pipe-top.png, pipe-body.png", function() {
     Q.compileSheets("crates.png","crates.json");
     Q.stageScene("level1", 0);
 });
