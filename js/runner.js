@@ -1,6 +1,9 @@
 window.addEventListener("load",function() {
 var canvas = document.querySelector('#quintus');
+var game_state = STATE_AUTO;
 var SCALE_FACTOR = 1;
+var STATE_AUTO = 0;
+var STATE_PLAYING = 1;
 canvas.width = 1472 * SCALE_FACTOR;
 canvas.height = 828 * SCALE_FACTOR;
 canvas.style['background-size'] = canvas.width + "px " + canvas.height + "px";
@@ -12,11 +15,9 @@ window.addEventListener('resize', moveCanvas);
 moveCanvas();
 
 Quintus.Random = function(Q) {
-
     Q.random = function(min,max) {
         return Math.floor(Math.random() * (max - min)) + min;
     }
-
 };
 
 var Q = window.Q = Quintus()
@@ -28,18 +29,19 @@ var Q = window.Q = Quintus()
         }).controls().touch()
 
 Q.input.keyboardControls({
-  ENTER: "onEnter"
+  "ENTER": "onEnter",
+  "SPACE": "onSpace",
 });
 
 Q.gravityY = 1000  * SCALE_FACTOR;
 Q.scaleFactor = SCALE_FACTOR;
 
 Q.Sprite.extend("Pipe",{
-
     init: function(p) {
         this._super(p,{
             asset: "pipe-top.png",
             scale: 1 * Q.scaleFactor,
+            z: -100,
         });
     },
 
@@ -52,11 +54,19 @@ Q.Sprite.extend("Ground",{
         });
     },
 });
+Q.Sprite.extend("Grass",{
+    init: function(p) {
+        this._super(p,{
+            asset: "grass-repeat.png",
+            scale: 1 * Q.scaleFactor,
+            type: 0,
+        });
+    },
+});
 
 
 function gen_bottom_pipe(x, y, height) {
     var pipes = [];
-
     var cum_height = 0;
     var piece = new Q.Pipe({x: x, y: y + cum_height, asset: "pipe-top.png",});
     pipes.push(piece);
@@ -104,7 +114,7 @@ function gen_pipe_pair(x, ceiling, gap_ceiling, gap_floor, floor) {
 Q.Evented.extend("Generator",{
 
     init: function() {
-        this.frequency = 100; // lower value increases frequency
+        this.frequency = 100 *SCALE_FACTOR; // lower value increases frequency
         this.last_player_x = undefined;
     },
 
@@ -119,50 +129,14 @@ Q.Evented.extend("Generator",{
 });
 
 
-Q.Generator.extend("FloorGenerator",{
-
-    init: function(y) {
-        this._super();
-
-        this.x = 0;
-        this.y = y;
-
-        this.ref_sprite = new Q.Sprite({asset: "rock-texture.png"});
-        this.frequency = this.ref_sprite.p.w;
-        this.sprites = [];
-        this.list_limit = 5;
-
-        this.generateAt(0);
-        this.generateAt(0);
-    },
-
-    generateAt: function(player_x) {
-        sprite = new Q.Sprite({
-            x: this.x,
-            y: this.y,
-            asset: "rock-texture.png"
-        });
-        Q.stage(1).insert(sprite);
-
-        this.sprites.unshift(sprite);
-       if (this.sprites.length > this.list_limit) {
-            old_sprite = this.sprites.pop();
-            old_sprite.destroy();
-        }
-
-        this.x += this.frequency;
-    },
-});
-
-
 Q.Generator.extend("PipeGenerator",{
 
     init: function() {
         this._super();
 
-        this.frequency = 600;
+        this.frequency = 600 * SCALE_FACTOR;
         this.ceiling = 0;
-        this.floor = (Q.height/2) * Q.scaleFactor;
+        this.floor = (Q.height/2);
         this.gap_size = 200 * Q.scaleFactor;
 
         this.last_gap_top = undefined;
@@ -209,11 +183,11 @@ Q.Sprite.extend("Player",{
       jumped: false,
       jump_speed: -350 * Q.scaleFactor,
       scale: 1 * Q.scaleFactor,
+      state: STATE_AUTO,
     });
 
     this.initControls();
     this.on("hit", this, "_handleCollision");
-
     this.add("2d");
   },
 
@@ -232,15 +206,19 @@ Q.Sprite.extend("Player",{
 
   _onKeyDown: function(code){
     if (code == 13){
-      if (!this.p.jumped){
-        this.p.vy = this.p.jump_speed;
-        this.p.jumped = true;
+      if (this.p.state == STATE_PLAYING){
+        if (!this.p.jumped){
+          this.p.vy = this.p.jump_speed;
+          this.p.jumped = true;
+        }
+      } else {
+        this.p.state = STATE_PLAYING;
       }
     }
   },
 
   _onKeyUp: function(code){
-      if (code == 13){
+      if (this.p.state == STATE_PLAYING && code == 13){
         this.p.jumped = false;
       }
   },
@@ -248,6 +226,12 @@ Q.Sprite.extend("Player",{
   _step: function(dt){
     this.p.vx += (this.p.speed - this.p.vx)/4;
     this.stage.viewport.centerOn(this.p.x + 300 * Q.scaleFactor, Q.height/2);
+    if (this.p.x < 0)
+      this._handleCollision();
+    if (this.p.state == STATE_AUTO){
+      if (this.p.y > (Q.height / 2) - 200 * Q.scaleFactor)
+        this.p.vy = this.p.jump_speed;
+    }
   },
 
 });
@@ -258,29 +242,38 @@ Q.Player.extend("Helicopter",{
   init: function(p) {
       this._super(p);
       this.p.asset = "flopter.png";
-      this.p.y = this.p.y / 2;
+      this.p.y = Q.height*(5/8);
       this.p.x = 0,
       this.p.jump_speed = -55 * Q.scaleFactor;
+      this.p.state = STATE_AUTO;
   },
 
   _step: function(dt) {
     this.p.vx += (this.p.speed - this.p.vx)/4;
-
-    if(Q.inputs['S']) {
-      this.p.vy += this.p.jump_speed;
+    if (this.p.state == STATE_AUTO){
+      if (this.p.y > Q.height - 200 * Q.scaleFactor )
+        this.p.vy += this.p.jump_speed;
+      if (this.p.y < Q.height/2 + 50 * Q.scaleFactor)
+        this.p.vy = 0;
     }
-    if (this.p.vy > 600 * Q.scaleFactor){
-      this.p.vy = 600 * Q.scaleFactor;
-    }
-    if (this.p.vy < -400 * Q.scaleFactor){
-      this.p.vy = -400 * Q.scaleFactor;
+    else{
+      if(Q.inputs['S']) {
+        this.p.vy += this.p.jump_speed;
+      }
+      if (this.p.vy > 600 * Q.scaleFactor){
+        this.p.vy = 600 * Q.scaleFactor;
+      }
+      if (this.p.vy < -400 * Q.scaleFactor){
+        this.p.vy = -400 * Q.scaleFactor;
+      }
     }
   },
 
-  _onKeyUp: function(code){
-    // do nothing
+  _onKeyDown: function(code){
+    if (code == 83 && this.p.state == STATE_AUTO){
+      this.p.state = STATE_PLAYING;
+    }
   },
-
   _onKeyUp: function(code){
     // do nothing
   },
@@ -289,38 +282,41 @@ Q.Player.extend("Helicopter",{
 
 
 Q.scene("level1",function(stage) {
-
+  counter = 0;
+  game_state = STATE_AUTO;
   bird = new Q.Player();
   stage.insert(bird);
   heli = new Q.Helicopter();
   stage.insert(heli);
 
   pipe_generator = new Q.PipeGenerator();
-  //floor_generator = new Q.FloorGenerator(Q.height/2 * Q.scaleFactor);
 
   stage.add("viewport");
   stage.viewport.centerOn(bird.p.x + 300 * Q.scaleFactor, Q.height/2);
-  stage.pause();
-
-  Q.input.on("onEnter", function(){
-    stage.unpause();
-  });
 
 
   ref_sprite = new Q.Sprite({asset: "rock-texture.png"});
-  w = ref_sprite.p.w;
-  h = ref_sprite.p.h;
+  w = ref_sprite.p.w * Q.scaleFactor;
+  h = ref_sprite.p.h * Q.scaleFactor;
+  var difficulty = 1;
   var cave = new Cave(
-    Q.height/2 * SCALE_FACTOR,
-    Q.height * SCALE_FACTOR,
+    Q.height/2,
+    Q.height,
     w,
     h,
-    Q.width * SCALE_FACTOR);
+    Q.width);
 
   Q.stage(1).on("step", this, function(){
-    cave.step(bird.p.x *  SCALE_FACTOR); 
+    game_state = bird.p.state * heli.p.state;
+    if (game_state == STATE_PLAYING){
+      counter++;
+      if (counter > 1000){
+        difficulty += 1;
+        counter = 0;
+      }
+    }
+    cave.step(bird.p.x, difficulty); 
     pipe_generator.step(bird.p.x);
-    // floor_generator.step(bird.p.x);
   });
 });
 
@@ -333,10 +329,10 @@ Q.scene("endGame", function(stage){
   }));
 
   var label1 = box.insert(new Q.UI.Text({ x: 0, y: 0, fill: "#CCCCCC",
-                                           label: "Press Enter"}));
+                                           label: "Press Space"}));
   var label2 = box.insert(new Q.UI.Text({x:10 * Q.scaleFactor, y: -10 * Q.scaleFactor- label1.p.h,
                                         label: stage.options.label }));
-  Q.input.on("onEnter", function(){
+  Q.input.on("onSpace", function(){
     Q.input.off("onEnter");
     Q.clearStage(1);
     Q.clearStage(2);
@@ -345,7 +341,7 @@ Q.scene("endGame", function(stage){
   box.fit(20);
 });
 
-Q.load("background-wall.png, rock-texture.png, crates.png, crates.json, cappy.png, flopter.png, pipe-top.png, pipe-body.png", function() {
+Q.load("background-wall.png, rock-texture.png, crates.png, crates.json, cappy.png, flopter.png, pipe-top.png, pipe-body.png, grass-repeat.png", function() {
     Q.compileSheets("crates.png","crates.json");
     initBackground();
     Q.stageScene("background", 0);
