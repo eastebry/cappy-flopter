@@ -224,6 +224,8 @@ Q.Sprite.extend("Player",{
   },
 
   _step: function(dt){
+    if (this.p.y < 0)
+      this._handleCollision();
     this.p.vx += (this.p.speed - this.p.vx)/4;
     this.stage.viewport.centerOn(this.p.x + 300 * Q.scaleFactor, Q.height/2);
     if (this.p.x < 0)
@@ -233,7 +235,6 @@ Q.Sprite.extend("Player",{
         this.p.vy = this.p.jump_speed;
     }
   },
-
 });
 
 
@@ -283,6 +284,24 @@ Q.Player.extend("Helicopter",{
 
 Q.scene("level1",function(stage) {
   counter = 0;
+  var score = 0;
+  var score_box = stage.insert(new Q.UI.Container({
+    x: 20, y: 20, fill: "rgba(0,0,0,0.5)"
+  }));
+  var score_counter = score_box.insert(new Q.UI.Text({ x: 0, y: 0, fill: "#CCCCCC", label: "0 Meters"}));
+  score_box.fit(20);
+  
+  var cappy_intro = stage.insert(new Q.UI.Container({
+    x: Q.width - 100 * SCALE_FACTOR, y: Q.height/4, fill: "rgba(0,0,0,0.5)"
+  }));
+  cappy_intro.insert(new Q.UI.Text({ x: 0, y: 0, fill: "#CCCCCC", label: "Tap Enter for Cappy"}));
+  var flopter_intro = stage.insert(new Q.UI.Container({
+    x: Q.width + 200 * SCALE_FACTOR, y: Q.height*3/4, fill: "rgba(0,0,0,0.1)"
+  }));
+  flopter_intro.insert(new Q.UI.Text({ x: 0, y: 0, fill: "#CCCCCC", label: "Hold S for Flopter"}));
+  
+  cappy_intro.fit(20);
+  flopter_intro.fit(20);
   game_state = STATE_AUTO;
   bird = new Q.Player();
   stage.insert(bird);
@@ -294,22 +313,33 @@ Q.scene("level1",function(stage) {
   stage.add("viewport");
   stage.viewport.centerOn(bird.p.x + 300 * Q.scaleFactor, Q.height/2);
 
-
   ref_sprite = new Q.Sprite({asset: "rock-texture.png"});
   w = ref_sprite.p.w * Q.scaleFactor;
   h = ref_sprite.p.h * Q.scaleFactor;
-  var difficulty = 1;
+  var difficulty = 2;
   var cave = new Cave(
     Q.height/2,
     Q.height,
     w,
     h,
     Q.width);
-
+    
   Q.stage(1).on("step", this, function(){
+    score_box.p.x = bird.p.x - 250 * SCALE_FACTOR;
+    score_counter.p.label = Math.floor(score/100) +  " Meters";
+    if (bird.p.state  == STATE_PLAYING && cappy_intro != null){
+      cappy_intro.destroy();
+      cappy_intro = null;
+    }
+    if (heli.p.state  == STATE_PLAYING && flopter_intro != null){
+      flopter_intro.destroy();
+      flopter_intro = null;
+    }
     game_state = bird.p.state * heli.p.state;
     if (game_state == STATE_PLAYING){
       counter++;
+      score++;
+      console.log(score);
       if (counter > 1000){
         difficulty += 1;
         counter = 0;
@@ -322,7 +352,6 @@ Q.scene("level1",function(stage) {
 
 
 Q.scene("endGame", function(stage){
-  //pause the gameplay stage
   Q.stage(1).pause();
   var box = stage.insert(new Q.UI.Container({
     x: Q.width/2, y: Q.height/2, fill: "rgba(0,0,0,0.5)"
