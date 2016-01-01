@@ -372,7 +372,6 @@ Q.scene("endGame", function(stage){
 
 Q.load("background-wall.png, rock-texture.png, crates.png, crates.json, cappy.png, flopter.png, pipe-top.png, pipe-body.png, grass-repeat.png", function() {
     Q.compileSheets("crates.png","crates.json");
-    initBackground();
     Q.stageScene("background", 0);
     Q.stageScene("level1", 1);
 });
